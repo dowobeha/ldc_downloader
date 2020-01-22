@@ -96,9 +96,8 @@ log "Accessing LDC login page"
 echo
 
 # Extract authenticity token from LDC login page
-TOKEN=$(curl ${COOKIE_FLAGS} "${LOGIN_URL}" 2> /dev/null | sed 's,>,>\n,g' | grep '<input name="authenticity_token"' | tr ' ' '\n' | grep "^value=" | sed 's,^value=",,; s,"$,,')
-
-
+TOKEN=$(curl ${COOKIE_FLAGS} "${LOGIN_URL}" 2> /dev/null | grep -oh '"authenticity_token"\s*value="[^"]*')
+TOKEN=${TOKEN:28}
 
 
 ################################################################################
@@ -167,7 +166,7 @@ echo
 echo "A list of the LDC corpora associated with your account has been saved to ${DOWNLOAD_FILE}"
 echo
 
-if [[ "$@" == "" ]]; then
+if [[ "$*" == "" ]]; then
 
     echo "To download any of these corpora, re-run this script, providing the LDC corpus IDs as command line arguments"
     echo
@@ -182,36 +181,36 @@ fi
 #                                                                              #
 ################################################################################
 
-for LDC_CORPUS in $@ ; do
+for LDC_CORPUS in "$@" ; do
 
     echo
 
-    TSV_LINE=$(grep "${LDC_CORPUS}" "${DOWNLOAD_FILE}")
+    TSV_LINE=$(grep "${LDC_CORPUS}" ${DOWNLOAD_FILE})
     CORPUS_URL=$(cut  -f 5 <<< "${TSV_LINE}")
     CORPUS_NAME=$(cut -f 2 <<< "${TSV_LINE}" | tr ' ' '_')
     CORPUS_FILE=$(cut -f 6 <<< "${TSV_LINE}" | sed 's,<br/>.*,,; s,.tgz$,,')
 
     LDC_CORPUS_FILENAME="${LDC_CORPUS}__${CORPUS_NAME}__${CORPUS_FILE}.tgz"
     LDC_CORPUS_LOGNAME="${LDC_CORPUS}__${CORPUS_NAME}__${CORPUS_FILE}.log"
-    
+
     if   [[ "${CORPUS_URL}" =~ ^/download ]]; then
-    
+
         log "Downloading ${LDC_CORPUS} from ${BASE_URL}${CORPUS_URL} to \"${LDC_CORPUS_FILENAME}\""
         echo
         curl ${COOKIE_FLAGS} "${BASE_URL}${CORPUS_URL}" > "${LDC_CORPUS_FILENAME}" 2> "${LDC_CORPUS_LOGNAME}"
-    
+
     elif [[ "${CORPUS_URL}" =~ ^http ]]; then
-    
+
         log "Downloading ${LDC_CORPUS} from ${CORPUS_URL}"
         echo
         curl ${COOKIE_FLAGS} "${CORPUS_URL}" > "${LDC_CORPUS_FILENAME}" 2> "${LDC_CORPUS_LOGNAME}"
-    
+
     else
-    
+
         log "Not downloading ${LDC_CORPUS}: ${CORPUS_URL}"
         echo
-    
-    fi 
+
+    fi
 
 
     FILE_TYPE=$(file -i -b "${LDC_CORPUS_FILENAME}" | cut -d ';' -f 1)
