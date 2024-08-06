@@ -185,7 +185,7 @@ for LDC_CORPUS in "$@" ; do
 
     echo
 
-    TSV_LINE=$(grep "${LDC_CORPUS}" ${DOWNLOAD_FILE})
+    TSV_LINE=$(grep -P "${LDC_CORPUS}\t" ${DOWNLOAD_FILE})
     CORPUS_URL=$(cut  -f 5 <<< "${TSV_LINE}")
     CORPUS_NAME=$(cut -f 2 <<< "${TSV_LINE}" | tr ' ' '_')
     CORPUS_FILE=$(cut -f 6 <<< "${TSV_LINE}" | sed 's,<br/>.*,,; s,.tgz$,,')
